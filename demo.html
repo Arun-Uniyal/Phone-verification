@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>International Telephone Input</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js" integrity="sha512-jGsMH83oKe9asCpkOVkBnUrDDTp8wl+adkB2D+//JtlxO4SrLoJdhbOysIFQJloQFD+C4Fl1rMsQZF76JjV0eQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="build/css/intlTelInput.css">
+  <!-- <link rel="stylesheet" href="build/css/demo.css"> -->
+</head>
+
+<body>
+  <h1>International Telephone Input</h1>
+  <form>
+	<div class="de elInputWrapper de-editable de-input-block elAlign_center elMargin0" id="tmp_input-97116" data-de-type="input" data-de-editing="false" data-title="input" data-ce="false" data-trigger="none" data-animate="fade" data-delay="500" type="phone" style="margin-top: 25px; outline: currentcolor none medium;">
+		<input type="phone" placeholder="Your phone number" name="phone" class="elInput elInput100 elAlign_left elInputMid elInputStyl0 elInputBG1 elInputBR5 elInputI0 elInputIBlack elInputIRight required0 ceoinput" data-type="extra">
+	</div>
+  
+    <!-- <input id="phone" name="phone" type="tel"> -->
+    <button type="submit">Submit</button>
+  </form>
+
+  <script src="build/js/intlTelInput.js"></script>
+  <script>
+	//Change this value to match the ID of the phone field in your form
+var your_field_id = '#tmp_input-97116';
+var num;
+var i = your_field_id + ' .elInput';
+//Add a hidden field in the form to pass our data to Zapier
+jQuery('#cfAR').append("<input type='hidden' name='intl_phone'>");
+//Append the validation message inputs
+jQuery(your_field_id).append("<div id='valid-msg' class='hide'>✓ Valid</div>").append("<div id='error-msg' class='hide'></div>");
+// here, the index maps to the error code returned from getValidationError - see readme
+var errorMap = ['Invalid number', 'Invalid country code', 'Too short', 'Too long', 'Invalid number'];
+errorMsg = document.querySelector('#error-msg'),
+validMsg = document.querySelector('#valid-msg');
+var input = document.querySelector(i);
+var iti = window.intlTelInput(input, {
+  initialCountry: 'auto',
+  geoIpLookup: function(success, failure) {
+    $.get('https://ipinfo.io', function() {}, 'jsonp').always(function(resp) {
+      var countryCode = (resp && resp.country) ? resp.country : 'us';
+      success(countryCode);
+    });
+  },
+  nationalMode:false,
+  autoHideDialCode: true,
+  //separateDialCode: true,
+  formatOnDisplay: true,
+  utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js?1603274336113',
+  hiddenInput: 'full_phone'
+});
+var reset = function() {
+  input.classList.remove('error');
+  errorMsg.innerHTML = '';
+  errorMsg.classList.add('hide');
+  validMsg.classList.add('hide');
+  var num = iti.getNumber(intlTelInputUtils.numberFormat.E164);
+  iti.setNumber(num);
+  console.log(num);
+};
+// on blur: validate
+input.addEventListener('keyup', function() {
+  reset();
+  if (input.value.trim()) {
+    if (iti.isValidNumber()) {
+      validMsg.classList.remove('hide');
+      var num = iti.getNumber(intlTelInputUtils.numberFormat.E164);
+      iti.setNumber(num);
+      jQuery('body').find("#cfAR input[name='intl_phone']").val(num);
+      console.log(num);
+      jQuery("a[href='#submit-form']").removeClass('disabled-button');
+      jQuery(i).removeClass('invalid-phone').addClass('valid-phone');
+    } else {
+      input.classList.add('error');
+      var errorCode = iti.getValidationError();
+      errorMsg.innerHTML = errorMap[errorCode];
+      errorMsg.classList.remove('hide');
+      jQuery("a[href='#submit-form']").addClass('disabled-button');
+      jQuery(i).removeClass('valid-phone').addClass('invalid-phone');
+    }
+  }
+});
+// on keyup / change flag: reset
+input.addEventListener('change', reset);
+//input.addEventListener('keyup', reset);
+  </script>
+  <script>
+    //var input = document.querySelector("#tmp_input-97116");
+    //window.intlTelInput(input, {
+      // allowDropdown: false,
+      // autoHideDialCode: false,
+      // autoPlaceholder: "off",
+      // dropdownContainer: document.body,
+      // excludeCountries: ["us"],
+      // formatOnDisplay: false,
+      // geoIpLookup: function(callback) {
+      //   $.get("http://ipinfo.io", function() {}, "jsonp").always(function(resp) {
+      //     var countryCode = (resp && resp.country) ? resp.country : "";
+      //     callback(countryCode);
+      //   });
+      // },
+      // hiddenInput: "full_number",
+      // initialCountry: "auto",
+      // localizedCountries: { 'de': 'Deutschland' },
+      // nationalMode: false,
+      // onlyCountries: ['us', 'gb', 'ch', 'ca', 'do'],
+      // placeholderNumberType: "MOBILE",
+      // preferredCountries: ['cn', 'jp'],
+      // separateDialCode: true,
+      //utilsScript: "build/js/utils.js",
+    //});
+  </script>
+</body>
+
+</html>
